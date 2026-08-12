@@ -141,33 +141,45 @@ the specific corners where "Electron + WebSocket" trades away some
 capability a fully native app would have, in exchange for being much
 easier to build, ship, and modify without Xcode.
 
+---
 
-🛠️ How to Use
-Launch the App: Open the hosted GitHub Pages link on your preferred browser.
-Create Your Session: Use the + Folder or + Song buttons to start organizing your audio library.
-Load Sounds: Import your favorite custom samples into the designated pads.
-Perform & Produce: Tap the colorful pads to trigger your loaded samples on the fly!
-🎵 Included Starter Pack
-Sampler includes a bonus file called In_The_End_Starterpack.zip.
+## 🛠️ How to Use
+
+1. **Launch the App**: Open the hosted GitHub Pages link on your preferred browser.
+2. **Create Your Session**: Use the `+ Folder` or `+ Song` buttons to start organizing your audio library.
+3. **Load Sounds**: Import your favorite custom samples into the designated pads.
+4. **Perform & Produce**: Tap the colorful pads to trigger your loaded samples on the fly!
+
+## 🎵 Included Starter Pack
+
+Sampler includes a bonus file called **`In_The_End_Starterpack.zip`**.
 
 Inside the ZIP are four audio files:
 
-D.mp3
-E.mp3
-F.mp3
-A.mp3
-These files can be imported into pads to recreate a simple melody inspired by "In The End".
+* `D.mp3`
+* `E.mp3`
+* `F.mp3`
+* `A.mp3`
 
-Setup
+These files can be imported into pads to recreate a simple melody inspired by **"In The End"**.
+
+### Setup
+
 Place the samples onto four pads in the following order:
 
-Pad	Sample
-1	D.mp3
-2	E.mp3
-3	F.mp3
-4	A.mp3
-Melody Tutorial
+| Pad | Sample |
+| --- | ------ |
+| 1   | D.mp3  |
+| 2   | E.mp3  |
+| 3   | F.mp3  |
+| 4   | A.mp3  |
+
+### Melody Tutorial
+
 After importing the samples, play them in this sequence:
 
+```text
 D A A F E E E E F D
+```
+
 This starter pack is included as a simple demonstration of how custom samples can be imported, organized, and performed inside Sampler.
