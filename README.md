@@ -1,3 +1,7 @@
+
+
+https://github.com/user-attachments/assets/fc710ce2-db8c-444a-97a1-47a4cc4f615a
+
 # MG MIDI Controller — Full Architecture
 
 ```
