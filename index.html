@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Sampler">
+<meta name="theme-color" content="#060809">
+<title>Sampler</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body,#app{height:100%;background:#060809;color:#dde2e8;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',system-ui,sans-serif;overflow:hidden}
+/* iOS safe areas */
+#app{display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+
+:root{
+  --bg:#060809;--surface:#0c0f12;--panel:#101418;--rail:#161c22;
+  --b1:rgba(255,255,255,0.05);--b2:rgba(255,255,255,0.1);
+  --tx:#dde2e8;--tx2:#566070;--tx3:#323d4a;--acc:#6c5fd0;--acc2:#8b80e0;
+}
+
+/* TOOLBAR */
+#toolbar{display:flex;align-items:center;gap:8px;padding:0 12px;height:46px;background:var(--surface);border-bottom:1px solid var(--b1);flex-shrink:0}
+#proj-name{flex:1;font-size:13px;font-weight:600;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.asdot{width:6px;height:6px;border-radius:50%;background:#3ddc84;flex-shrink:0;box-shadow:0 0 5px #3ddc84}
+.tb{background:var(--rail);border:1px solid var(--b2);color:var(--tx2);font-size:11px;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;-webkit-appearance:none}
+.tb:active{opacity:.7}
+
+/* BODY */
+#body{display:flex;flex:1;overflow:hidden;min-height:0}
+
+/* SIDEBAR */
+#sb{background:var(--surface);border-right:1px solid var(--b1);width:190px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden;transition:width .18s}
+#sb.col{width:40px}
+#sb-top{display:flex;align-items:center;gap:8px;padding:0 8px;height:42px;border-bottom:1px solid var(--b1);flex-shrink:0}
+.ham{background:none;border:none;color:var(--tx2);cursor:pointer;font-size:18px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:4px;-webkit-appearance:none}
+#sb-lbl{font-size:10px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.1em;white-space:nowrap}
+#sb-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 0}
+#sb-list::-webkit-scrollbar{width:3px}
+#sb-list::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+.f-hd{display:flex;align-items:center;gap:5px;padding:6px 8px;cursor:pointer;font-size:12px;color:var(--tx2);border-radius:5px;margin:1px 3px}
+.f-chev{font-size:9px;color:var(--tx3);transition:transform .15s;flex-shrink:0}
+.f-chev.open{transform:rotate(90deg)}
+.f-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.f-acts{display:flex;gap:2px}
+.fa{background:none;border:none;color:var(--tx3);cursor:pointer;font-size:11px;padding:2px 5px;border-radius:3px;-webkit-appearance:none}
+.song-row{display:flex;align-items:center;gap:6px;padding:5px 8px 5px 20px;font-size:12px;color:var(--tx3);cursor:pointer;border-radius:5px;margin:1px 3px;min-height:34px}
+.song-row.active{background:rgba(108,95,208,.14);color:var(--acc2)}
+.sdot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.5;flex-shrink:0}
+.song-row.active .sdot{opacity:1}
+.sname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.s-acts{display:flex;gap:2px}
+#sb-foot{display:flex;gap:4px;padding:7px;border-top:1px solid var(--b1);flex-shrink:0}
+.sfb{flex:1;font-size:11px;background:var(--rail);border:1px solid var(--b2);color:var(--tx3);padding:6px 4px;border-radius:6px;cursor:pointer;-webkit-appearance:none}
+
+/* WORKSPACE */
+#ws{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#no-song{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--tx3)}
+#no-song .ico{font-size:52px;opacity:.12}
+#song-ws{display:none;flex:1;flex-direction:column;overflow:hidden}
+#song-ws.show{display:flex}
+#ws-bar{display:flex;align-items:center;gap:10px;padding:7px 12px;border-bottom:1px solid var(--b1);flex-shrink:0}
+#ws-title{font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rsel{background:var(--rail);border:1px solid var(--b2);color:var(--tx2);font-size:10px;padding:4px 8px;border-radius:5px;-webkit-appearance:none;outline:none}
+
+/* GRIDS */
+#grids{display:flex;flex:1;overflow:hidden;min-height:0}
+.gp{display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.gh{display:flex;align-items:center;gap:6px;padding:5px 8px;border-bottom:1px solid var(--b1);flex-shrink:0}
+.glbl{font-size:10px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;flex:1}
+.gsz{font-size:9px;background:var(--rail);border:1px solid var(--b2);color:var(--tx3);padding:3px 7px;border-radius:4px;cursor:pointer;-webkit-appearance:none}
+.gbody{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:7px;display:flex;flex-direction:column;gap:4px}
+.pad-row{display:flex;gap:4px}
+
+/* DIVIDER */
+#div{width:6px;background:var(--b1);cursor:col-resize;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+#div.drag{background:rgba(108,95,208,.5)}
+#div::after{content:'';width:2px;height:20px;background:var(--b2);border-radius:1px}
+
+/* ══════════════════════════════════════
+   THE PAD — 5×5 LED DOTS
+══════════════════════════════════════ */
+.pad{
+  position:relative;flex-shrink:0;border-radius:7px;
+  /* do NOT use cursor:pointer — it breaks touch on iOS */
+  overflow:hidden;background:#080b0e;
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,0.06),inset 0 0 0 3px rgba(0,0,0,0.6),0 3px 12px rgba(0,0,0,0.7);
+  /* touch-action none so we get all touch events */
+  touch-action:none;
+  transition:box-shadow .1s;
+}
+.pad canvas{position:absolute;inset:0;width:100%;height:100%;border-radius:inherit;display:block}
+.pad .mesh{
+  position:absolute;inset:0;border-radius:inherit;
+  background-image:radial-gradient(circle, rgba(0,0,0,0.65) 1px, transparent 1px);
+  background-size:3.6px 3.6px;
+  z-index:2;pointer-events:none;
+}
+.pad .plabels{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.pad-name{font-size:9.5px;font-weight:700;color:rgba(255,255,255,.9);text-align:center;padding:0 4px;line-height:1.2;word-break:break-word;max-width:100%;text-shadow:0 1px 5px rgba(0,0,0,1)}
+.pad-file{font-size:7px;color:rgba(255,255,255,.4);text-align:center;margin-top:2px;padding:0 3px;text-shadow:0 1px 4px rgba(0,0,0,1);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pad-midi{font-size:7px;font-weight:700;color:#8b80e0;text-align:center;margin-top:2px;padding:0 3px;text-shadow:0 1px 4px rgba(0,0,0,1);letter-spacing:.03em}
+.pad.empty .pad-name{font-size:22px;font-weight:200;color:rgba(255,255,255,.1)}
+.pad.playing{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12),inset 0 0 0 3px rgba(0,0,0,.4),0 0 22px 6px var(--pad-glow,rgba(108,95,208,.55)),0 4px 16px rgba(0,0,0,.6)}
+.pad.pressed{transform:scale(.9)}
+
+/* Add row / size */
+.add-row{width:100%;font-size:9px;color:var(--tx3);border:1px dashed var(--b2);border-radius:5px;padding:5px;background:none;cursor:pointer;margin-top:2px;-webkit-appearance:none}
+.sz-btn{font-size:9px;color:var(--tx3);background:var(--rail);border:1px solid var(--b2);border-radius:4px;padding:4px 8px;cursor:pointer;width:100%;margin-top:3px;-webkit-appearance:none;text-align:center}
+
+/* RIPPLE */
+.ripple{position:absolute;border-radius:50%;pointer-events:none;z-index:10;transform:translate(-50%,-50%) scale(0);animation:rpl .5s ease-out forwards}
+@keyframes rpl{0%{transform:translate(-50%,-50%) scale(0);opacity:.85}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
+
+/* CONTEXT MENU */
+#ctx{position:fixed;z-index:9999;background:#131820;border:1px solid var(--b2);border-radius:10px;padding:4px;min-width:170px;box-shadow:0 16px 48px rgba(0,0,0,.85);display:none}
+.ci{display:flex;align-items:center;gap:8px;padding:10px 12px;font-size:12px;color:var(--tx2);cursor:pointer;border-radius:6px}
+.ci:active{background:var(--rail);color:var(--tx)}
+.ci.red{color:#e05a5a}
+.csep{height:1px;background:var(--b1);margin:3px 0}
+
+/* MODAL */
+#mbg{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9998;display:none;align-items:center;justify-content:center;padding:16px}
+#mbg.show{display:flex}
+.modal{background:#131820;border:1px solid var(--b2);border-radius:14px;padding:20px;width:100%;max-width:340px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.modal h3{font-size:13px;font-weight:600;margin-bottom:14px;color:var(--tx)}
+.mlabel{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px}
+.minput{width:100%;background:#0c1014;border:1px solid var(--b2);color:var(--tx);font-size:14px;padding:9px 10px;border-radius:7px;outline:none;margin-bottom:10px;-webkit-appearance:none}
+.minput:focus{border-color:var(--acc)}
+.presets{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.prs{font-size:10px;background:var(--rail);border:1px solid var(--b2);color:var(--tx2);padding:5px 9px;border-radius:5px;cursor:pointer;-webkit-appearance:none}
+.prs.sel{background:var(--acc);border-color:var(--acc);color:#fff}
+.mactions{display:flex;gap:7px;justify-content:flex-end;margin-top:10px}
+.mcancel{font-size:12px;padding:8px 16px;border-radius:8px;cursor:pointer;background:var(--rail);border:1px solid var(--b2);color:var(--tx2);-webkit-appearance:none}
+.mok{font-size:12px;padding:8px 16px;border-radius:8px;cursor:pointer;background:var(--acc);border:none;color:#fff;-webkit-appearance:none}
+
+/* GRADIENT EDITOR */
+.grad-stop{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.stop-del{background:none;border:none;color:var(--tx3);cursor:pointer;font-size:16px;padding:2px 6px;-webkit-appearance:none;min-width:28px}
+.add-stop{font-size:11px;background:var(--rail);border:1px dashed var(--b2);color:var(--tx3);padding:7px 10px;border-radius:6px;cursor:pointer;width:100%;margin-bottom:10px;-webkit-appearance:none}
+.grad-preview{width:100%;height:36px;border-radius:8px;margin-bottom:12px;border:1px solid var(--b2)}
+.angle-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.angle-lbl{font-size:11px;color:var(--tx3);min-width:68px}
+
+/* COLOR INPUT - iOS-friendly */
+input[type=color]{-webkit-appearance:none;border:none;width:32px;height:32px;padding:0;background:none;cursor:pointer;border-radius:7px;border:2px solid var(--b2)}
+input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+input[type=color]::-webkit-color-swatch{border:none;border-radius:5px}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:var(--rail);border-radius:2px;outline:none;accent-color:var(--acc)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--acc);cursor:pointer}
+
+/* TOAST */
+#toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#131820;border:1px solid var(--b2);border-radius:9px;padding:9px 18px;font-size:12px;color:var(--tx);z-index:99999;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;max-width:80vw;overflow:hidden;text-overflow:ellipsis}
+#toast.show{opacity:1}
+#fin{display:none}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="toolbar">
+    <span id="proj-name" onclick="renameProj()">My Project</span>
+    <div class="asdot" title="Autosave on"></div>
+    <button class="tb" id="midi-btn" onclick="openMidiPanel()">🔴 MIDI</button>
+    <button class="tb" onclick="openSettings()">⚙</button>
+    <button class="tb" onclick="doImport()">Import</button>
+    <button class="tb" onclick="doExport()">Export</button>
+  </div>
+  <div id="body">
+    <div id="sb">
+      <div id="sb-top">
+        <button class="ham" onclick="toggleSb()">☰</button>
+        <span id="sb-lbl">Library</span>
+      </div>
+      <div id="sb-list"></div>
+      <div id="sb-foot">
+        <button class="sfb" onclick="addFolder()">+ Folder</button>
+        <button class="sfb" onclick="addRootSong()">+ Song</button>
+      </div>
+    </div>
+    <div id="ws">
+      <div id="no-song">
+        <div class="ico">🎛</div>
+        <div style="font-size:13px;color:var(--tx3)">Create a folder or song to start</div>
+      </div>
+      <div id="song-ws">
+        <div id="ws-bar">
+          <span id="ws-title"></span>
+          <select class="rsel" id="rsel" onchange="applyRatio(+this.value)">
+            <option value="55">55/45</option>
+            <option value="50">50/50</option>
+            <option value="60">60/40</option>
+            <option value="66">66/33</option>
+            <option value="75">75/25</option>
+          </select>
+        </div>
+        <div id="grids">
+          <div class="gp" id="main-panel">
+            <div class="gh"><span class="glbl">Main</span><button class="gsz" onclick="editDim('main')">⊞ Size</button></div>
+            <div class="gbody" id="main-grid"></div>
+          </div>
+          <div id="div"></div>
+          <div class="gp" id="sec-panel">
+            <div class="gh"><span class="glbl">Secondary</span><button class="gsz" onclick="editDim('sec')">⊞ Size</button></div>
+            <div class="gbody" id="sec-grid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="ctx"></div>
+<div id="mbg" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal"></div></div>
+<input type="file" id="fin" accept=".wav,.mp3,.flac,.aiff,.m4a,.ogg">
+<div id="toast"></div>
+<div id="qr-scan-overlay" style="display:none;position:fixed;inset:0;z-index:10000;background:#000;flex-direction:column">
+  <video id="qr-scan-video" playsinline autoplay muted style="flex:1;width:100%;object-fit:cover"></video>
+  <div style="position:absolute;top:calc(env(safe-area-inset-top) + 12px);left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:0 16px">
+    <span style="color:#fff;font-size:13px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,.8)">Point at the QR code in MG MIDI Bridge</span>
+    <button class="tb" onclick="closeQrScanner()" style="background:rgba(0,0,0,.5);color:#fff;border-color:rgba(255,255,255,.3)">Cancel</button>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
+<script>
+'use strict';
+
+/* ══════════════════════════════════════════════
+   iOS AUDIO UNLOCK
+   iOS Safari requires a user gesture to start
+   AudioContext. We unlock it on first touch.
+══════════════════════════════════════════════ */
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+document.addEventListener('touchstart', () => getAudioCtx(), {once:true, passive:true});
+document.addEventListener('mousedown', () => getAudioCtx(), {once:true});
+
+/* ══════════════════════════════════════════════
+   LED CANVAS RENDERER
+   5×5 grid of glowing LED dots, multi-color gradient
+══════════════════════════════════════════════ */
+function renderLED(canvas, stops, angle, playing) {
+  // Use naturalWidth/naturalHeight from offsetParent or fixed fallback
+  const parent = canvas.parentElement;
+  const W_css = parent ? parent.offsetWidth : 80;
+  const H_css = parent ? parent.offsetHeight : 80;
+  if (W_css < 4 || H_css < 4) return; // not mounted yet
+
+  const dpr = window.devicePixelRatio || 1;
+  const W = Math.round(W_css * dpr);
+  const H = Math.round(H_css * dpr);
+  if (canvas.width !== W || canvas.height !== H) {
+    canvas.width = W;
+    canvas.height = H;
+  }
+
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  // Dark base — tinted toward the gradient's colour so the pad itself
+  // (not just the LED wave) reflects the chosen gradient
+  ctx.fillStyle = baseTint(stops);
+  ctx.fillRect(0, 0, W, H);
+
+  // Build linear gradient for colour sampling
+  const rad = (angle * Math.PI) / 180;
+  const cx = W/2, cy = H/2;
+  const len = Math.hypot(W, H) / 2;
+  const grd = ctx.createLinearGradient(
+    cx - Math.cos(rad)*len, cy - Math.sin(rad)*len,
+    cx + Math.cos(rad)*len, cy + Math.sin(rad)*len
+  );
+  const sorted = [...stops].sort((a,b) => a.pos - b.pos);
+  sorted.forEach(s => {
+    try { grd.addColorStop(Math.max(0, Math.min(1, s.pos)), s.color); } catch(e){}
+  });
+
+  // Paint onto offscreen to sample colours per dot position
+  let octx;
+  if (typeof OffscreenCanvas !== 'undefined') {
+    const oc = new OffscreenCanvas(W, H);
+    octx = oc.getContext('2d');
+    octx.fillStyle = grd;
+    octx.fillRect(0, 0, W, H);
+  } else {
+    const off = document.createElement('canvas');
+    off.width = W; off.height = H;
+    octx = off.getContext('2d');
+    octx.fillStyle = grd;
+    octx.fillRect(0, 0, W, H);
+  }
+  const imgData = octx.getImageData(0, 0, W, H);
+
+  const COLS = 5, ROWS = 5;
+  const padX = W * 0.09, padY = H * 0.09;
+  const cellW = (W - padX*2) / COLS;
+  const cellH = (H - padY*2) / ROWS;
+  const dotR = Math.min(cellW, cellH) * (playing ? 0.44 : 0.36);
+
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const dx = padX + cellW*c + cellW/2;
+      const dy = padY + cellH*r + cellH/2;
+
+      const px = Math.min(Math.floor(dx), W-1);
+      const py = Math.min(Math.floor(dy), H-1);
+      const idx = (py * W + px) * 4;
+      const dr = imgData.data[idx];
+      const dg = imgData.data[idx+1];
+      const db = imgData.data[idx+2];
+
+      const bv = playing ? (0.88 + (Math.sin(r*7+c*3)*0.12)) : (0.70 + (Math.sin(r*5+c*7)*0.10));
+      const fr = Math.min(255, dr*bv|0);
+      const fg = Math.min(255, dg*bv|0);
+      const fb = Math.min(255, db*bv|0);
+
+      // Outer glow halo
+      const halo = ctx.createRadialGradient(dx,dy,0, dx,dy, dotR*3);
+      halo.addColorStop(0, `rgba(${fr},${fg},${fb},${playing?0.4:0.22})`);
+      halo.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.beginPath();
+      ctx.arc(dx, dy, dotR*3, 0, Math.PI*2);
+      ctx.fillStyle = halo;
+      ctx.fill();
+
+      // LED dot core
+      const dot = ctx.createRadialGradient(dx-dotR*.2,dy-dotR*.2,0, dx,dy,dotR);
+      dot.addColorStop(0, `rgba(${Math.min(255,fr+65)},${Math.min(255,fg+65)},${Math.min(255,fb+65)},1)`);
+      dot.addColorStop(0.5, `rgba(${fr},${fg},${fb},1)`);
+      dot.addColorStop(1, `rgba(${fr*.35|0},${fg*.35|0},${fb*.35|0},0.85)`);
+      ctx.beginPath();
+      ctx.arc(dx, dy, dotR, 0, Math.PI*2);
+      ctx.fillStyle = dot;
+      ctx.fill();
+    }
+  }
+
+  // Edge vignette
+  const vig = ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.28, W/2,H/2,Math.max(W,H)*.75);
+  vig.addColorStop(0,'rgba(0,0,0,0)');
+  vig.addColorStop(1,'rgba(0,0,0,0.58)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0,0,W,H);
+}
+
+function domColor(stops) {
+  const s = (stops||[{color:'#6c5fd0'}])[Math.floor((stops||[]).length/2)] || {color:'#6c5fd0'};
+  const h = (s.color||'#6c5fd0').replace('#','');
+  return [parseInt(h.slice(0,2),16)||108, parseInt(h.slice(2,4),16)||95, parseInt(h.slice(4,6),16)||208];
+}
+
+function baseTint(stops) {
+  // Blend the gradient's colour into a near-black base so the pad plate
+  // itself carries a hint of the gradient, not just the LED dots.
+  const [r,g,b] = domColor(stops);
+  const mix = (c, base) => Math.round(c*0.22 + base*0.78);
+  return `rgb(${mix(r,7)},${mix(g,9)},${mix(b,12)})`;
+}
+
+/* ══════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════ */
+let P = {name:'My Project', folders:[], songs:[], songData:{}, midi:{host:'',port:5004,channel:1,token:''}};
+let activeSong = null;
+// Polyphonic playback: every pad press gets its own voice, so pads never
+// cut each other off and can be played simultaneously.
+let activeVoices = new Map(); // voiceId -> {audio, el, gid, pid, songId}
+let voiceSeq = 0;
+let masterVol = 0.85;
+let sbOpen = true;
+let ctxT = null;
+
+// MIDI bridge — connects to the Mac companion app over WebSocket.
+// The Mac side owns the actual CoreMIDI virtual port; this tab only
+// ever sends noteOn/noteOff JSON messages, never touches MIDI directly.
+let midiSocket = null;
+let midiStatus = 'disconnected'; // 'disconnected' | 'connecting' | 'connected'
+
+// Pending canvas draws (run after layout)
+const pendingDraws = new Map();
+
+function defGrad() {
+  return {stops:[
+    {color:'#7c3aed',pos:0},
+    {color:'#2563eb',pos:0.35},
+    {color:'#06b6d4',pos:0.7},
+    {color:'#e879f9',pos:1}
+  ], angle:135};
+}
+
+const SK = 'sampler_ios_v1';
+function save(){try{localStorage.setItem(SK,JSON.stringify(P))}catch(e){}}
+function load(){
+  try{const d=localStorage.getItem(SK);if(d)P=validateProjectShape(JSON.parse(d))||P}catch(e){}
+  if(!P.midi)P.midi={host:'',port:5004,channel:1,token:''};
+  if(P.midi.token==null)P.midi.token='';
+}
+// Defensive shape check for anything that becomes `P` — used both for the
+// normal load() path and for user-supplied Import (doImport ships an
+// arbitrary uploaded JSON file straight into app state). Rejects objects
+// that don't look like a project instead of trusting them blindly, which
+// prevents malformed/hostile imports from corrupting state or smuggling in
+// unexpected keys (e.g. a __proto__ key aimed at prototype pollution).
+function validateProjectShape(obj){
+  if(!obj||typeof obj!=='object'||Array.isArray(obj))return null;
+  const clean={
+    name: typeof obj.name==='string' ? obj.name.slice(0,120) : 'My Project',
+    folders: Array.isArray(obj.folders) ? obj.folders.filter(f=>f&&typeof f==='object'&&typeof f.id==='string') : [],
+    songs: Array.isArray(obj.songs) ? obj.songs.filter(s=>s&&typeof s==='object'&&typeof s.id==='string') : [],
+    songData: (obj.songData&&typeof obj.songData==='object'&&!Array.isArray(obj.songData)) ? obj.songData : {},
+    midi: (obj.midi&&typeof obj.midi==='object') ? {
+      host: typeof obj.midi.host==='string' ? obj.midi.host.slice(0,120) : '',
+      port: Number.isFinite(obj.midi.port) ? obj.midi.port : 5004,
+      channel: Number.isFinite(obj.midi.channel) ? Math.max(1,Math.min(16,obj.midi.channel)) : 1,
+      token: typeof obj.midi.token==='string' ? obj.midi.token.slice(0,128) : ''
+    } : {host:'',port:5004,channel:1,token:''}
+  };
+  // Strip dangerous keys from nested objects rather than trusting depth-first.
+  delete clean.__proto__; delete clean.constructor; delete clean.prototype;
+  return clean;
+}
+function uid(){return Math.random().toString(36).slice(2,9)}
+function defSong(){return{ratio:55,main:{rows:4,cols:4,pads:{}},sec:{rows:3,cols:3,pads:{}}}}
+function getSong(id){if(!P.songData[id])P.songData[id]=defSong();return P.songData[id]}
+function isPadPlaying(gid,pid){for(const v of activeVoices.values())if(v.songId===activeSong&&v.gid===gid&&v.pid===pid)return true;return false}
+function defPad(){return{name:'Pad',grad:defGrad(),audio:null,audioName:'',volume:85,midiNote:null,midiVelocity:100}}
+function getPad(sid,gid,pid){const g=getSong(sid)[gid];if(!g.pads[pid])g.pads[pid]=defPad();return g.pads[pid]}
+
+/* ══════════════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════════════ */
+function renderSb() {
+  const el = document.getElementById('sb-list');
+  el.innerHTML = '';
+  if (!P.folders.length && !P.songs.length) {
+    el.innerHTML = '<div style="padding:18px 10px;font-size:11px;color:var(--tx3);text-align:center;line-height:1.8">No songs yet.<br>Tap + Folder or + Song.</div>';
+    return;
+  }
+  P.folders.forEach(f => {
+    const fd = document.createElement('div');
+    const hd = document.createElement('div'); hd.className='f-hd';
+    hd.innerHTML = `<span class="f-chev ${f.open?'open':''}">▶</span><span style="font-size:13px">📁</span><span class="f-name">${esc(f.name)}</span><span class="f-acts"><button class="fa" onclick="event.stopPropagation();addSongTo('${f.id}')">+</button><button class="fa" onclick="event.stopPropagation();renameFolder('${f.id}')">✏</button><button class="fa" onclick="event.stopPropagation();delFolder('${f.id}')" style="color:#e05a5a">✕</button></span>`;
+    hd.onclick = () => { f.open=!f.open; renderSb(); save(); };
+    fd.appendChild(hd);
+    if (f.open) f.songs.forEach(s => fd.appendChild(songEl(s, f.id)));
+    el.appendChild(fd);
+  });
+  P.songs.forEach(s => el.appendChild(songEl(s, null)));
+}
+function songEl(s, fid) {
+  const el = document.createElement('div');
+  el.className = 'song-row' + (activeSong===s.id?' active':'');
+  el.innerHTML = `<div class="sdot"></div><span class="sname">${esc(s.name)}</span><span class="s-acts"><button class="fa" onclick="event.stopPropagation();renameSong('${s.id}','${fid||''}')">✏</button><button class="fa" onclick="event.stopPropagation();delSong('${s.id}','${fid||''}')" style="color:#e05a5a">✕</button></span>`;
+  el.onclick = () => openSong(s.id);
+  return el;
+}
+function toggleSb() {
+  sbOpen = !sbOpen;
+  document.getElementById('sb').classList.toggle('col', !sbOpen);
+  document.getElementById('sb-lbl').style.display = sbOpen?'':'none';
+  document.getElementById('sb-foot').style.display = sbOpen?'':'none';
+}
+function addFolder(){const n=prompt('Folder name:');if(!n)return;P.folders.push({id:uid(),name:n,open:true,songs:[]});renderSb();save()}
+function addSongTo(fid){const n=prompt('Song name:');if(!n)return;const f=P.folders.find(x=>x.id===fid);if(!f)return;const s={id:uid(),name:n};f.songs.push(s);f.open=true;renderSb();save();openSong(s.id)}
+function addRootSong(){const n=prompt('Song name:');if(!n)return;const s={id:uid(),name:n};P.songs.push(s);renderSb();save();openSong(s.id)}
+function renameFolder(id){const f=P.folders.find(x=>x.id===id);if(!f)return;const n=prompt('Rename:',f.name);if(!n)return;f.name=n;renderSb();save()}
+function delFolder(id){if(!confirm('Delete folder and songs?'))return;P.folders=P.folders.filter(x=>x.id!==id);renderSb();save()}
+function renameSong(id,fid){const arr=fid?P.folders.find(f=>f.id===fid)?.songs:P.songs;const s=arr?.find(x=>x.id===id);if(!s)return;const n=prompt('Rename:',s.name);if(!n)return;s.name=n;if(activeSong===id)document.getElementById('ws-title').textContent=n;renderSb();save()}
+function delSong(id,fid){if(!confirm('Delete song?'))return;if(fid){const f=P.folders.find(x=>x.id===fid);if(f)f.songs=f.songs.filter(x=>x.id!==id)}else P.songs=P.songs.filter(x=>x.id!==id);if(activeSong===id){activeSong=null;showNoSong()}renderSb();save()}
+
+/* ══════════════════════════════════════════════
+   WORKSPACE
+══════════════════════════════════════════════ */
+function openSong(id) {
+  activeSong = id; stopAllAudio();
+  const all = [...P.folders.flatMap(f=>f.songs), ...P.songs];
+  const s = all.find(x=>x.id===id); if(!s) return;
+  document.getElementById('no-song').style.display = 'none';
+  document.getElementById('song-ws').classList.add('show');
+  document.getElementById('ws-title').textContent = s.name;
+  const d = getSong(id);
+  document.getElementById('rsel').value = d.ratio;
+  applyRatio(d.ratio, false);
+  renderGrid('main'); renderGrid('sec');
+  renderSb(); save();
+  // Draw canvases after layout settles
+  setTimeout(() => { drawAll(); }, 80);
+}
+function showNoSong(){document.getElementById('no-song').style.display='flex';document.getElementById('song-ws').classList.remove('show')}
+function applyRatio(r,sv=true){
+  document.getElementById('main-panel').style.width=r+'%';
+  document.getElementById('sec-panel').style.width=(100-r)+'%';
+  if(sv&&activeSong){getSong(activeSong).ratio=r;save()}
+  setTimeout(drawAll, 50);
+}
+
+function drawAll() {
+  if (!activeSong) return;
+  ['main','sec'].forEach(gid => {
+    const g = getSong(activeSong)[gid];
+    const body = document.getElementById(gid+'-grid');
+    body.querySelectorAll('.pad[data-pid]').forEach(padEl => {
+      const pid = padEl.dataset.pid;
+      const pad = g.pads[pid];
+      if (!pad) return;
+      const canvas = padEl.querySelector('canvas');
+      if (!canvas) return;
+      const playing = isPadPlaying(gid, pid);
+      try {
+        renderLED(canvas, (pad.grad||defGrad()).stops, (pad.grad||defGrad()).angle, playing);
+        setGlowStyle(padEl, pad.grad||defGrad(), playing);
+      } catch(e) { console.warn('pad render failed', gid, pid, e); }
+    });
+  });
+}
+
+/* ══════════════════════════════════════════════
+   GRID
+══════════════════════════════════════════════ */
+function renderGrid(gid) {
+  if (!activeSong) return;
+  const g = getSong(activeSong)[gid];
+  const cont = document.getElementById(gid+'-grid');
+  cont.innerHTML = '';
+  for (let r=0; r<g.rows; r++) {
+    const row = document.createElement('div'); row.className='pad-row';
+    for (let c=0; c<g.cols; c++) row.appendChild(makePad(`${r}_${c}`, gid, g.pads[`${r}_${c}`]||null));
+    cont.appendChild(row);
+  }
+  const ab = document.createElement('button'); ab.className='add-row'; ab.textContent='+ Row';
+  ab.onclick=()=>{g.rows++;renderGrid(gid);setTimeout(drawAll,60);save()};
+  cont.appendChild(ab);
+  const sb = document.createElement('button'); sb.className='sz-btn'; sb.textContent=`⊞ ${g.rows}×${g.cols}`;
+  sb.onclick=()=>editDim(gid); cont.appendChild(sb);
+  sizePads(gid);
+}
+
+function makePad(pid, gid, pad) {
+  const el = document.createElement('div');
+  el.className = 'pad' + (pad?'':' empty');
+  el.dataset.pid = pid; el.dataset.gid = gid;
+
+  if (pad) {
+    const canvas = document.createElement('canvas');
+    el.appendChild(canvas);
+    const mesh = document.createElement('div'); mesh.className='mesh'; el.appendChild(mesh);
+    const labels = document.createElement('div'); labels.className='plabels';
+    const nm = document.createElement('div'); nm.className='pad-name'; nm.textContent=pad.name;
+    labels.appendChild(nm);
+    if (pad.audioName) {
+      const sf = document.createElement('div'); sf.className='pad-file';
+      sf.textContent = pad.audioName.length>13 ? pad.audioName.slice(0,12)+'…' : pad.audioName;
+      labels.appendChild(sf);
+    }
+    if (pad.midiNote != null) {
+      const mc = document.createElement('div'); mc.className='pad-midi';
+      mc.textContent = '🎹 ' + noteNumToName(pad.midiNote);
+      labels.appendChild(mc);
+    }
+    el.appendChild(labels);
+
+    if (isPadPlaying(gid, pid)) el.classList.add('playing');
+
+    // Touch events — iOS Safari needs touchstart/touchend NOT to call preventDefault on the outer element
+    // We use a flag to distinguish tap from long-press.
+    //
+    // Note On fires immediately on touchstart (not after a disambiguation
+    // delay) because delaying it would add ~550ms of input latency to every
+    // real pad hit, which defeats the point of a performance controller.
+    // The tradeoff is that opening the long-press edit menu also fires a
+    // brief Note On. Bug fix below: that note is now released the instant
+    // the long-press is recognized (550ms) instead of staying held for
+    // however long the user keeps their finger down while editing, which
+    // could previously be several seconds of a stuck note reaching the DAW.
+    let touchStartTime = 0, longPressTimer = null, touchMoved = false, noteReleased = false;
+
+    el.addEventListener('touchstart', e => {
+      touchStartTime = Date.now();
+      touchMoved = false;
+      noteReleased = false;
+      const touch = e.touches[0];
+      if (pad.midiNote != null) {
+        const vel = touch.force ? Math.max(1, Math.round(touch.force*127)) : (pad.midiVelocity||100);
+        midiNoteOn(pad.midiNote, vel);
+      }
+      longPressTimer = setTimeout(() => {
+        if (!touchMoved) {
+          if (pad.midiNote != null && !noteReleased) { midiNoteOff(pad.midiNote); noteReleased = true; }
+          showPadCtx(touch.clientX, touch.clientY, gid, pid);
+        }
+      }, 550);
+    }, {passive:true});
+
+    el.addEventListener('touchmove', () => {
+      touchMoved = true;
+      clearTimeout(longPressTimer);
+    }, {passive:true});
+
+    el.addEventListener('touchend', e => {
+      clearTimeout(longPressTimer);
+      if (pad.midiNote != null && !noteReleased) { midiNoteOff(pad.midiNote); noteReleased = true; }
+      if (!touchMoved && (Date.now()-touchStartTime) < 500) {
+        // Short tap = trigger
+        const touch = e.changedTouches[0];
+        el.classList.add('pressed');
+        setTimeout(()=>el.classList.remove('pressed'), 120);
+        spawnRipple(el, touch.clientX, touch.clientY, pad.grad||defGrad());
+        triggerPad(pid, gid, el, pad);
+      }
+    }, {passive:true});
+
+    el.addEventListener('touchcancel', () => {
+      clearTimeout(longPressTimer);
+      if (pad.midiNote != null && !noteReleased) { midiNoteOff(pad.midiNote); noteReleased = true; }
+    }, {passive:true});
+
+    // Mouse (desktop)
+    el.addEventListener('mousedown', e => {
+      spawnRipple(el, e.clientX, e.clientY, pad.grad||defGrad());
+      triggerPad(pid, gid, el, pad);
+      if (pad.midiNote != null) midiNoteOn(pad.midiNote, pad.midiVelocity||100);
+    });
+    el.addEventListener('mouseup', () => { if (pad.midiNote != null) midiNoteOff(pad.midiNote); });
+    el.addEventListener('mouseleave', () => { if (pad.midiNote != null) midiNoteOff(pad.midiNote); });
+    el.addEventListener('contextmenu', e => { e.preventDefault(); showPadCtx(e.clientX, e.clientY, gid, pid); });
+
+    // Drag & drop audio
+    el.addEventListener('dragover', e => { e.preventDefault(); el.style.outline='2px solid rgba(255,255,255,.5)'; });
+    el.addEventListener('dragleave', () => el.style.outline='');
+    el.addEventListener('drop', e => { e.preventDefault(); el.style.outline=''; const f=e.dataTransfer.files[0]; if(f) importFile(f,gid,pid); });
+  } else {
+    const labels = document.createElement('div'); labels.className='plabels';
+    const nm = document.createElement('div'); nm.className='pad-name'; nm.textContent='+';
+    labels.appendChild(nm); el.appendChild(labels);
+    el.addEventListener('touchend', e => { e.stopPropagation(); initPad(gid,pid); renderGrid(gid); setTimeout(drawAll,60); }, {passive:true});
+    el.addEventListener('mousedown', () => { initPad(gid,pid); renderGrid(gid); setTimeout(drawAll,60); });
+  }
+  return el;
+}
+
+function initPad(gid,pid){if(!activeSong)return;const g=getSong(activeSong)[gid];if(!g.pads[pid])g.pads[pid]=defPad();save()}
+
+function setGlowStyle(el, grad, playing) {
+  const [pr,pg,pb] = domColor(grad.stops);
+  if (playing) {
+    el.style.setProperty('--pad-glow',`rgba(${pr},${pg},${pb},0.55)`);
+    el.classList.add('playing');
+    el.style.boxShadow = `inset 0 0 0 1.5px rgba(255,255,255,.12),inset 0 0 0 3px rgba(0,0,0,.4),0 0 22px 6px rgba(${pr},${pg},${pb},0.55),0 4px 16px rgba(0,0,0,.6)`;
+  } else {
+    el.classList.remove('playing');
+    el.style.boxShadow = `inset 0 0 0 1.5px rgba(255,255,255,0.06),inset 0 0 0 3px rgba(0,0,0,.6),0 0 10px 0 rgba(${pr},${pg},${pb},0.2),0 3px 12px rgba(0,0,0,0.65)`;
+  }
+}
+
+function sizePads(gid) {
+  if (!activeSong) return;
+  const g = getSong(activeSong)[gid];
+  const panel = document.getElementById(gid+'-panel');
+  const body = document.getElementById(gid+'-grid');
+  const aw = panel.offsetWidth - 14, ah = panel.offsetHeight - 88;
+  const pw = Math.floor((aw - (g.cols-1)*4) / g.cols);
+  const ph = Math.floor((ah - (g.rows-1)*4) / g.rows);
+  const sz = Math.max(48, Math.min(pw, ph, 140));
+  body.querySelectorAll('.pad').forEach(p => { p.style.width=sz+'px'; p.style.height=sz+'px'; });
+}
+
+/* ══════════════════════════════════════════════
+   AUDIO — iOS Safari compatible, polyphonic
+   Every press spawns its own voice. Voices never
+   stop each other — each plays to the end of its
+   own audio file independently.
+══════════════════════════════════════════════ */
+function triggerPad(pid, gid, el, pad) {
+  if (!pad.audio) return;
+  getAudioCtx(); // ensure unlocked
+
+  // Fresh Audio instance per press — never reuse/steal an in-flight one,
+  // so overlapping presses (same pad or different pads) all play in full.
+  const au = new Audio(pad.audio);
+  au.volume = (pad.volume/100) * masterVol;
+
+  const songId = activeSong;
+  const voiceId = ++voiceSeq;
+  activeVoices.set(voiceId, {audio:au, el, gid, pid, songId});
+
+  const grad = pad.grad || defGrad();
+  const canvas = el.querySelector('canvas');
+  setGlowStyle(el, grad, true);
+  if (canvas) renderLED(canvas, grad.stops, grad.angle, true);
+
+  const finishVoice = () => {
+    activeVoices.delete(voiceId);
+    // Only turn the pad's visuals off once ALL of its voices have finished
+    if (songId === activeSong && !isPadPlaying(gid, pid)) {
+      setGlowStyle(el, grad, false);
+      if (canvas) renderLED(canvas, grad.stops, grad.angle, false);
+    }
+  };
+
+  const playPromise = au.play();
+  if (playPromise) playPromise.catch(e => { console.warn('Audio play failed:', e); finishVoice(); });
+
+  au.onended = finishVoice;
+}
+
+// Stops every currently-playing voice (used e.g. when switching songs)
+function stopAllAudio() {
+  const voices = [...activeVoices.values()];
+  activeVoices.clear();
+  const seenEls = new Set();
+  voices.forEach(v => {
+    try { v.audio.pause(); v.audio.currentTime = 0; } catch(e){}
+    if (seenEls.has(v.el)) return;
+    seenEls.add(v.el);
+    const canvas = v.el.querySelector('canvas');
+    const pad = getSong(v.songId)?.[v.gid]?.pads?.[v.pid];
+    const grad = pad?.grad || defGrad();
+    setGlowStyle(v.el, grad, false);
+    if (canvas) renderLED(canvas, grad.stops, grad.angle, false);
+  });
+}
+
+/* ══════════════════════════════════════════════
+   RIPPLE
+══════════════════════════════════════════════ */
+function spawnRipple(el, cx, cy, grad) {
+  const rect = el.getBoundingClientRect();
+  const x = cx - rect.left, y = cy - rect.top;
+  const sz = Math.min(rect.width, rect.height) * .8;
+  const stops = grad.stops || [];
+  const mid = stops[Math.floor(stops.length/2)] || {color:'#7c3aed'};
+  const h = (mid.color||'#7c3aed').replace('#','');
+  const r=parseInt(h.slice(0,2),16)||124, g=parseInt(h.slice(2,4),16)||63, b=parseInt(h.slice(4,6),16)||224;
+  const rpl = document.createElement('div'); rpl.className='ripple';
+  rpl.style.cssText = `left:${x}px;top:${y}px;width:${sz}px;height:${sz}px;border:2px solid rgba(${r},${g},${b},.9);background:rgba(${r},${g},${b},.1)`;
+  el.appendChild(rpl);
+  rpl.addEventListener('animationend', () => rpl.remove(), {once:true});
+}
+
+/* ══════════════════════════════════════════════
+   CONTEXT MENU
+══════════════════════════════════════════════ */
+function showPadCtx(x, y, gid, pid) {
+  ctxT = {gid, pid};
+  const pad = activeSong ? getSong(activeSong)[gid]?.pads?.[pid] : null;
+  const items = [
+    {icon:'✏', label:'Edit Name', fn:()=>ctxName()},
+    {icon:'🌈', label:'Edit Gradient', fn:()=>ctxGrad()},
+    {icon:'🎵', label:'Import Audio', fn:()=>ctxAudio()},
+    {icon:'🎹', label:'MIDI Note', fn:()=>ctxMidi()},
+  ];
+  if (pad?.audio) items.push({icon:'✖', label:'Remove Audio', fn:()=>ctxRemAudio()});
+  items.push(null, {icon:'🗑', label:'Delete Pad', fn:()=>ctxDel(), red:true});
+  buildCtx(x, y, items);
+}
+function buildCtx(x, y, items) {
+  const c = document.getElementById('ctx'); c.innerHTML='';
+  items.forEach(it => {
+    if (!it) { const s=document.createElement('div');s.className='csep';c.appendChild(s);return; }
+    const d = document.createElement('div'); d.className='ci'+(it.red?' red':'');
+    d.innerHTML = `<span>${it.icon}</span><span>${it.label}</span>`;
+    d.onclick = () => { it.fn(); closeCtx(); };
+    c.appendChild(d);
+  });
+  c.style.display = 'block';
+  c.style.left = Math.min(x, window.innerWidth-185)+'px';
+  c.style.top = Math.min(y, window.innerHeight-260)+'px';
+}
+function closeCtx(){document.getElementById('ctx').style.display='none'}
+document.addEventListener('touchstart', e => { if(!e.target.closest('#ctx')) closeCtx(); }, {passive:true});
+document.addEventListener('mousedown', e => { if(!e.target.closest('#ctx')) closeCtx(); });
+
+function ctxName() {
+  if (!ctxT||!activeSong) return;
+  const pad = getPad(activeSong, ctxT.gid, ctxT.pid);
+  showModal(`<h3>Pad Name</h3><label class="mlabel">Name</label><input class="minput" id="mn" value="${esc(pad.name)}" autocomplete="off"><div class="mactions"><button class="mcancel" onclick="closeModal()">Cancel</button><button class="mok" onclick="applyName()">Apply</button></div>`);
+  setTimeout(()=>{const i=document.getElementById('mn');if(i){i.focus();i.select()}},100);
+}
+function applyName(){if(!ctxT||!activeSong)return;const pad=getPad(activeSong,ctxT.gid,ctxT.pid);const v=document.getElementById('mn')?.value;if(v)pad.name=v;closeModal();renderGrid(ctxT.gid);setTimeout(drawAll,60);save()}
+
+/* ══════════════════════════════════════════════
+   MIDI NOTE EDITOR (per pad)
+══════════════════════════════════════════════ */
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+function noteNumToName(n){ if(n==null||isNaN(n)) return ''; n=Math.max(0,Math.min(127,Math.round(n))); const oct=Math.floor(n/12)-1; return NOTE_NAMES[n%12]+oct; }
+function noteNameToNum(s){
+  if(!s) return null;
+  const m = /^([A-Ga-g])(#|b)?(-?\d+)$/.exec(s.trim());
+  if(!m) return null;
+  let idx = NOTE_NAMES.indexOf(m[1].toUpperCase());
+  if(m[2]==='#') idx+=1; else if(m[2]==='b') idx-=1;
+  idx=((idx%12)+12)%12;
+  const oct=parseInt(m[3],10);
+  const n=(oct+1)*12+idx;
+  return (n>=0&&n<=127)?n:null;
+}
+function ctxMidi(){
+  if(!ctxT||!activeSong)return;
+  const pad = getPad(activeSong, ctxT.gid, ctxT.pid);
+  const note = pad.midiNote!=null ? pad.midiNote : 60;
+  const vel = pad.midiVelocity||100;
+  showModal(`<h3>🎹 MIDI Note</h3>
+    <label class="mlabel">Note Name</label>
+    <input class="minput" id="mm-name" value="${esc(noteNumToName(note))}" placeholder="e.g. C1" autocomplete="off" oninput="const n=noteNameToNum(this.value);if(n!=null){document.getElementById('mm-noteslider').value=n;document.getElementById('mm-num').textContent=n}">
+    <label class="mlabel">Note Number — <span id="mm-num">${note}</span></label>
+    <input type="range" id="mm-noteslider" min="0" max="127" value="${note}" oninput="document.getElementById('mm-num').textContent=this.value;document.getElementById('mm-name').value=noteNumToName(+this.value)">
+    <label class="mlabel">Velocity — <span id="mm-vel">${vel}</span></label>
+    <input type="range" id="mm-velslider" min="1" max="127" value="${vel}" oninput="document.getElementById('mm-vel').textContent=this.value">
+    <div class="mactions">
+      ${pad.midiNote!=null?'<button class="mcancel" style="color:#e05a5a" onclick="clearMidiNote()">Clear</button>':''}
+      <button class="mcancel" onclick="closeModal()">Cancel</button>
+      <button class="mok" onclick="applyMidiNote()">Apply</button>
+    </div>`);
+}
+function applyMidiNote(){
+  if(!ctxT||!activeSong)return;
+  const pad = getPad(activeSong, ctxT.gid, ctxT.pid);
+  const nameVal = document.getElementById('mm-name').value;
+  const parsed = noteNameToNum(nameVal);
+  pad.midiNote = parsed!=null ? parsed : +document.getElementById('mm-noteslider').value;
+  pad.midiVelocity = +document.getElementById('mm-velslider').value || 100;
+  closeModal();renderGrid(ctxT.gid);setTimeout(drawAll,60);save();
+}
+function clearMidiNote(){
+  if(!ctxT||!activeSong)return;
+  const pad = getPad(activeSong, ctxT.gid, ctxT.pid);
+  pad.midiNote = null;
+  closeModal();renderGrid(ctxT.gid);setTimeout(drawAll,60);save();
+}
+
+/* ══════════════════════════════════════════════
+   MIDI BRIDGE — WebSocket link to the Mac companion app.
+   The Mac app owns the CoreMIDI virtual port; this page only
+   ever emits {type:'noteOn'|'noteOff', note, velocity, channel}.
+
+   Every connection sends the pairing token (from QR or manual entry) in
+   its hello message — the Mac bridge rejects anything without a valid,
+   current token. See mac-companion/src/midiBridge.js.
+══════════════════════════════════════════════ */
+let midiReconnectTimer = null;
+let midiReconnectAttempt = 0;
+let midiIntentionalDisconnect = false;
+const MIDI_RECONNECT_MAX_DELAY_MS = 15000;
+
+// Basic hostname/IPv4 sanity check — this is a LAN convenience app, not a
+// place to accept arbitrary strings into a URL constructor. Rejects stray
+// whitespace, protocol prefixes, or path/query characters a user might
+// paste in by mistake.
+function isPlausibleHost(h){
+  if (typeof h !== 'string' || !h) return false;
+  if (h.length > 253) return false;
+  return /^[A-Za-z0-9.-]+$/.test(h);
+}
+function isPlausiblePort(p){ return Number.isFinite(p) && p>0 && p<=65535; }
+
+function midiConnect(){
+  midiIntentionalDisconnect = false;
+  clearTimeout(midiReconnectTimer);
+  if(!P.midi.host){toast("Enter the Mac's IP address first");return}
+  if(!isPlausibleHost(P.midi.host)){toast('That IP/hostname looks invalid');return}
+  if(!isPlausiblePort(P.midi.port)){toast('That port looks invalid');return}
+  if(midiSocket){try{midiSocket.close()}catch(e){}}
+  updateMidiIndicator('connecting');
+  try{
+    midiSocket = new WebSocket(`ws://${P.midi.host}:${P.midi.port||5004}`);
+    midiSocket.onopen = () => {
+      midiReconnectAttempt = 0;
+      updateMidiIndicator('connected');
+      toast('MIDI Bridge connected');
+      // Identify ourselves — Safari doesn't expose the device's system name,
+      // so we send the project name instead; the Mac app pairs it with the
+      // connection's IP address for display. The token proves we're a
+      // legitimate paired client, not just anyone who knows the IP.
+      sendMidi({type:'hello', name:(P.name||'iPad Controller'), token:(P.midi.token||'')});
+    };
+    midiSocket.onclose = () => {
+      updateMidiIndicator('disconnected');
+      midiSocket = null;
+      if (!midiIntentionalDisconnect) scheduleMidiReconnect();
+    };
+    midiSocket.onerror = () => { updateMidiIndicator('disconnected'); };
+  }catch(e){ updateMidiIndicator('disconnected'); scheduleMidiReconnect(); }
+}
+// Exponential backoff with a cap — covers Wi-Fi blips, the Mac app
+// restarting, and the iPad briefly losing its network, without hammering
+// the bridge or draining battery with a tight retry loop.
+function scheduleMidiReconnect(){
+  clearTimeout(midiReconnectTimer);
+  if(!P.midi.host) return; // nothing to reconnect to
+  midiReconnectAttempt++;
+  const delay = Math.min(1000 * Math.pow(1.7, midiReconnectAttempt), MIDI_RECONNECT_MAX_DELAY_MS);
+  midiReconnectTimer = setTimeout(() => {
+    if (document.visibilityState === 'hidden') { scheduleMidiReconnect(); return; } // wait for foreground
+    midiConnect();
+  }, delay);
+}
+// Backgrounded/suspended Safari tabs silently drop the WebSocket without
+// firing a clean close in a timely way. Reconnecting as soon as the tab is
+// foregrounded again recovers much faster than waiting on backoff alone.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && P.midi.host && midiStatus !== 'connected' && !midiIntentionalDisconnect) {
+    midiReconnectAttempt = 0;
+    midiConnect();
+  }
+});
+function midiDisconnect(){
+  midiIntentionalDisconnect = true;
+  clearTimeout(midiReconnectTimer);
+  if(midiSocket){ try{midiSocket.close()}catch(e){} midiSocket=null; }
+  updateMidiIndicator('disconnected');
+}
+function updateMidiIndicator(status){
+  midiStatus = status;
+  const b = document.getElementById('midi-btn');
+  if(!b) return;
+  b.textContent = status==='connected' ? '🟢 MIDI' : status==='connecting' ? '🟡 MIDI' : '🔴 MIDI';
+  const st = document.getElementById('midi-status-txt');
+  if (st) st.textContent = midiStatusLabel();
+  const tb = document.getElementById('midi-toggle-btn');
+  if (tb) tb.textContent = status==='connected' ? 'Disconnect' : 'Connect';
+}
+function midiStatusLabel(){
+  return midiStatus==='connected' ? '🟢 Connected' : midiStatus==='connecting' ? '🟡 Connecting…' : '🔴 Disconnected';
+}
+function sendMidi(obj){ if(midiSocket && midiSocket.readyState===1) midiSocket.send(JSON.stringify(obj)); }
+function midiNoteOn(note, velocity){ sendMidi({type:'noteOn', note, velocity:Math.max(1,Math.min(127,velocity||100)), channel:P.midi.channel||1}); }
+function midiNoteOff(note){ sendMidi({type:'noteOff', note, channel:P.midi.channel||1}); }
+// Not yet wired to any UI control (no knobs/mod-wheel exist in this view) —
+// available for a future piano keyboard / drum pad view to call directly.
+function midiCC(controller, value){ sendMidi({type:'cc', controller:Math.max(0,Math.min(127,controller)), value:Math.max(0,Math.min(127,value)), channel:P.midi.channel||1}); }
+function midiPitchBend(value14bit){ sendMidi({type:'pitchBend', value:Math.max(0,Math.min(16383,value14bit)), channel:P.midi.channel||1}); }
+function openMidiPanel(){
+  showModal(`<h3>🎹 MIDI Connection</h3>
+    <label class="mlabel">Mac IP Address</label>
+    <input class="minput" id="midi-host" value="${esc(P.midi.host||'')}" placeholder="e.g. 192.168.1.23" autocomplete="off">
+    <label class="mlabel">Port</label>
+    <input class="minput" id="midi-port" type="number" value="${P.midi.port||5004}">
+    <label class="mlabel">Pairing Code</label>
+    <input class="minput" id="midi-token" value="${esc(P.midi.token||'')}" placeholder="shown in the Mac app window" autocomplete="off">
+    <label class="mlabel">MIDI Channel</label>
+    <input class="minput" id="midi-channel" type="number" min="1" max="16" value="${P.midi.channel||1}">
+    <div style="font-size:11px;color:var(--tx3);line-height:1.6;margin-bottom:12px">
+      Status: <b id="midi-status-txt">${midiStatusLabel()}</b><br>
+      Run the MG MIDI Bridge companion app on your Mac (same Wi-Fi/USB network). Scan its QR code, or enter its IP, Port and Pairing Code manually — all three are shown in the companion app's window.
+    </div>
+    <div class="mactions">
+      <button class="mcancel" onclick="closeModal()">Close</button>
+      <button class="tb" style="margin-right:auto" onclick="openQrScanner()">📷 Scan to Pair</button>
+      <button class="mok" id="midi-toggle-btn" onclick="toggleMidiConn()">${midiStatus==='connected'?'Disconnect':'Connect'}</button>
+    </div>`);
+}
+function toggleMidiConn(){
+  P.midi.host = document.getElementById('midi-host').value.trim();
+  P.midi.port = +document.getElementById('midi-port').value || 5004;
+  P.midi.token = document.getElementById('midi-token').value.trim().slice(0,128);
+  P.midi.channel = Math.max(1, Math.min(16, +document.getElementById('midi-channel').value || 1));
+  save();
+  if (midiStatus==='connected') midiDisconnect(); else { midiReconnectAttempt=0; midiConnect(); }
+  setTimeout(openMidiPanel, 150);
+}
+
+/* ══════════════════════════════════════════════
+   QR SCAN-TO-PAIR — decodes the QR code shown in the
+   Mac companion window (encodes ws://<ip>:<port>) so the
+   user never has to type an IP address manually.
+   Requires jsQR (loaded via <script> tag) and camera permission.
+══════════════════════════════════════════════ */
+let qrStream = null, qrRAF = null;
+async function openQrScanner(){
+  if (typeof jsQR === 'undefined'){ toast('QR scanner unavailable (offline?)'); return; }
+  closeModal();
+  const overlay = document.getElementById('qr-scan-overlay');
+  const video = document.getElementById('qr-scan-video');
+  overlay.style.display = 'flex';
+  try{
+    qrStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    video.srcObject = qrStream;
+    await video.play();
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d', {willReadFrequently:true});
+    const scanFrame = () => {
+      if (video.readyState === video.HAVE_ENOUGH_DATA){
+        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(img.data, img.width, img.height);
+        if (code && code.data){ handleQrResult(code.data); return; }
+      }
+      qrRAF = requestAnimationFrame(scanFrame);
+    };
+    qrRAF = requestAnimationFrame(scanFrame);
+  }catch(e){
+    toast('Camera access denied');
+    closeQrScanner();
+  }
+}
+function handleQrResult(text){
+  // Expected format: ws://192.168.1.23:5004?t=<pairingToken>
+  const m = /^ws:\/\/([^:/?]+):(\d+)(?:\?(.*))?/.exec(text.trim());
+  closeQrScanner();
+  if (!m){ toast('Not a valid MG MIDI Bridge code'); return; }
+  const host = m[1], port = +m[2];
+  if (!isPlausibleHost(host) || !isPlausiblePort(port)){ toast('Not a valid MG MIDI Bridge code'); return; }
+  let token = '';
+  if (m[3]) {
+    const params = new URLSearchParams(m[3]);
+    token = (params.get('t') || '').slice(0,128);
+  }
+  P.midi.host = host;
+  P.midi.port = port;
+  P.midi.token = token;
+  save();
+  toast(`Pairing with ${host}…`);
+  midiReconnectAttempt = 0;
+  midiConnect();
+  openMidiPanel();
+}
+function closeQrScanner(){
+  const overlay = document.getElementById('qr-scan-overlay');
+  overlay.style.display = 'none';
+  if (qrRAF) cancelAnimationFrame(qrRAF);
+  if (qrStream) qrStream.getTracks().forEach(t=>t.stop());
+  qrStream = null; qrRAF = null;
+}
+
+/* ══════════════════════════════════════════════
+   GRADIENT EDITOR
+══════════════════════════════════════════════ */
+function ctxGrad() {
+  if (!ctxT||!activeSong) return;
+  const pad = getPad(activeSong, ctxT.gid, ctxT.pid);
+  window._grad = JSON.parse(JSON.stringify(pad.grad||defGrad()));
+  renderGradModal();
+}
+function renderGradModal() {
+  const g = window._grad;
+  const stopsHtml = g.stops.map((s,i) => `
+    <div class="grad-stop">
+      <input type="color" value="${s.color}" onchange="updateStop(${i},'color',this.value)">
+      <input type="range" style="flex:1" min="0" max="100" value="${Math.round(s.pos*100)}" oninput="updateStop(${i},'pos',this.value/100)">
+      <span style="font-size:10px;color:var(--tx3);min-width:32px;text-align:right">${Math.round(s.pos*100)}%</span>
+      ${g.stops.length>2?`<button class="stop-del" onclick="removeStop(${i})">✕</button>`:''}
+    </div>`).join('');
+  showModal(`<h3>🌈 Gradient</h3>
+    <label class="mlabel">Preview</label>
+    <div class="grad-preview" id="gp" style="background:${buildGradCSS(g)}"></div>
+    <label class="mlabel">Color Stops</label>
+    ${stopsHtml}
+    <button class="add-stop" onclick="addStop()">+ Add Color Stop</button>
+    <div class="angle-row">
+      <span class="angle-lbl" id="albl">Angle: ${g.angle}°</span>
+      <input type="range" style="flex:1" min="0" max="360" value="${g.angle}" oninput="updateAngle(this.value)">
+    </div>
+    <label class="mlabel">Presets</label>
+    <div class="presets">
+      <button class="prs" onclick="setPreset([{color:'#7c3aed',pos:0},{color:'#2563eb',pos:0.35},{color:'#06b6d4',pos:0.7},{color:'#e879f9',pos:1}],135)">Purple→Cyan</button>
+      <button class="prs" onclick="setPreset([{color:'#e879f9',pos:0},{color:'#f472b6',pos:0.4},{color:'#67e8f9',pos:1}],120)">Pink→Sky</button>
+      <button class="prs" onclick="setPreset([{color:'#ef4444',pos:0},{color:'#f97316',pos:0.5},{color:'#facc15',pos:1}],90)">Fire</button>
+      <button class="prs" onclick="setPreset([{color:'#22c55e',pos:0},{color:'#06b6d4',pos:0.5},{color:'#6366f1',pos:1}],135)">Ocean</button>
+      <button class="prs" onclick="setPreset([{color:'#f472b6',pos:0},{color:'#fb923c',pos:0.5},{color:'#facc15',pos:1}],90)">Sunset</button>
+      <button class="prs" onclick="setPreset([{color:'#a855f7',pos:0},{color:'#ec4899',pos:0.5},{color:'#f43f5e',pos:1}],135)">Neon</button>
+    </div>
+    <div class="mactions">
+      <button class="mcancel" onclick="closeModal()">Cancel</button>
+      <button class="mok" onclick="applyGrad()">Apply</button>
+    </div>`);
+}
+function buildGradCSS(g){const s=[...g.stops].sort((a,b)=>a.pos-b.pos).map(s=>`${s.color} ${Math.round(s.pos*100)}%`).join(', ');return `linear-gradient(${g.angle}deg,${s})`}
+function updateStop(i,k,v){window._grad.stops[i][k]=k==='pos'?parseFloat(v):v;const p=document.getElementById('gp');if(p)p.style.background=buildGradCSS(window._grad)}
+function updateAngle(v){window._grad.angle=parseInt(v);const l=document.getElementById('albl');if(l)l.textContent=`Angle: ${v}°`;const p=document.getElementById('gp');if(p)p.style.background=buildGradCSS(window._grad)}
+function addStop(){window._grad.stops.push({color:'#ffffff',pos:0.5});renderGradModal()}
+function removeStop(i){if(window._grad.stops.length<=2)return;window._grad.stops.splice(i,1);renderGradModal()}
+function setPreset(stops,angle){window._grad.stops=stops;window._grad.angle=angle;renderGradModal()}
+function applyGrad(){if(!ctxT||!activeSong)return;const pad=getPad(activeSong,ctxT.gid,ctxT.pid);pad.grad=window._grad;closeModal();renderGrid(ctxT.gid);setTimeout(drawAll,60);save()}
+
+function ctxAudio(){
+  if(!ctxT||!activeSong)return;
+  const inp=document.getElementById('fin');
+  inp.onchange=e=>{const f=e.target.files[0];if(!f)return;importFile(f,ctxT.gid,ctxT.pid);inp.value=''};
+  inp.click();
+}
+function ctxRemAudio(){if(!ctxT||!activeSong)return;const pad=getSong(activeSong)[ctxT.gid]?.pads?.[ctxT.pid];if(pad){pad.audio=null;pad.audioName=''}renderGrid(ctxT.gid);setTimeout(drawAll,60);save()}
+function ctxDel(){if(!ctxT||!activeSong)return;delete getSong(activeSong)[ctxT.gid].pads[ctxT.pid];renderGrid(ctxT.gid);setTimeout(drawAll,60);save()}
+
+function importFile(file,gid,pid){
+  const ext='.'+file.name.split('.').pop().toLowerCase();
+  if(!['.wav','.mp3','.flac','.aiff','.m4a','.ogg'].includes(ext)){toast('Unsupported format');return}
+  const r=new FileReader();
+  r.onload=e=>{
+    const pad=getPad(activeSong,gid,pid);
+    pad.audio=e.target.result;pad.audioName=file.name;
+    renderGrid(gid);setTimeout(drawAll,60);save();toast('Loaded: '+file.name);
+  };
+  r.readAsDataURL(file);
+}
+
+/* ══════════════════════════════════════════════
+   GRID SIZE
+══════════════════════════════════════════════ */
+function editDim(gid){
+  if(!activeSong)return;const g=getSong(activeSong)[gid];
+  const prs=[{l:'4×4',r:4,c:4},{l:'5×5',r:5,c:5},{l:'4×8',r:4,c:8},{l:'8×8',r:8,c:8},{l:'6×6',r:6,c:6},{l:'3×3',r:3,c:3},{l:'3×8',r:3,c:8}];
+  const pb=prs.map(p=>`<button class="prs${g.rows===p.r&&g.cols===p.c?' sel':''}" onclick="setPrs(${p.r},${p.c},this)">${p.l}</button>`).join('');
+  showModal(`<h3>Grid Size</h3><label class="mlabel">Presets</label><div class="presets">${pb}</div><label class="mlabel">Rows</label><input class="minput" type="number" id="dr" value="${g.rows}" min="1" max="16"><label class="mlabel">Columns</label><input class="minput" type="number" id="dc" value="${g.cols}" min="1" max="16"><div class="mactions"><button class="mcancel" onclick="closeModal()">Cancel</button><button class="mok" onclick="applyDim('${gid}')">Apply</button></div>`);
+}
+function setPrs(r,c,el){document.getElementById('dr').value=r;document.getElementById('dc').value=c;document.querySelectorAll('.prs').forEach(b=>b.classList.remove('sel'));el.classList.add('sel')}
+function applyDim(gid){const r=+document.getElementById('dr').value,c=+document.getElementById('dc').value;if(!r||!c)return;const g=getSong(activeSong)[gid];g.rows=r;g.cols=c;closeModal();renderGrid(gid);setTimeout(drawAll,60);save()}
+
+/* ══════════════════════════════════════════════
+   SETTINGS / IMPORT / EXPORT
+══════════════════════════════════════════════ */
+function openSettings(){
+  showModal(`<h3>Settings</h3><label class="mlabel">Master Volume — <span id="svd">${Math.round(masterVol*100)}%</span></label><input type="range" style="width:100%;margin-bottom:12px" min="0" max="100" value="${Math.round(masterVol*100)}" oninput="masterVol=this.value/100;document.getElementById('svd').textContent=Math.round(masterVol*100)+'%'"><div style="font-size:11px;color:var(--tx3);line-height:1.8">Autosave is always on.<br>Long-press any pad to edit it.<br>Drag audio files onto pads on desktop.</div><div class="mactions" style="margin-top:14px"><button class="mok" onclick="closeModal()">Done</button></div>`);
+}
+function renameProj(){const n=prompt('Project name:',P.name);if(!n)return;P.name=n;document.getElementById('proj-name').textContent=n;save()}
+function doExport(){const b=new Blob([JSON.stringify(P,null,2)],{type:'application/json'});const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=(P.name||'project').replace(/\s/g,'_')+'.json';a.click();URL.revokeObjectURL(u);toast('Exported!')}
+function doImport(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=()=>{const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{
+  try{
+    const raw=JSON.parse(e.target.result);
+    const clean=validateProjectShape(raw);
+    if(!clean){toast('Invalid project file');return}
+    P=clean;activeSong=null;showNoSong();renderSb();save();toast('Imported!')
+  }catch{toast('Invalid file')}
+};r.readAsText(f)};i.click()}
+
+/* ══════════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════════ */
+function showModal(html){document.getElementById('modal').innerHTML=html;document.getElementById('mbg').classList.add('show')}
+function closeModal(){document.getElementById('mbg').classList.remove('show')}
+
+/* ══════════════════════════════════════════════
+   DRAGGABLE DIVIDER — pointer events for desktop
+══════════════════════════════════════════════ */
+let divDrag = false;
+const divEl = document.getElementById('div');
+divEl.addEventListener('pointerdown', e => {
+  divDrag=true; divEl.classList.add('drag');
+  try{divEl.setPointerCapture(e.pointerId)}catch(err){}
+});
+divEl.addEventListener('pointermove', e => {
+  if (!divDrag) return;
+  const rect = document.getElementById('grids').getBoundingClientRect();
+  let p = ((e.clientX-rect.left)/rect.width)*100;
+  p = Math.max(20,Math.min(80,p));
+  const snaps=[20,25,33,40,50,55,60,66,75,80];
+  const s=snaps.reduce((a,b)=>Math.abs(b-p)<Math.abs(a-p)?b:a);
+  const r=Math.abs(s-p)<3?s:Math.round(p);
+  document.getElementById('main-panel').style.width=r+'%';
+  document.getElementById('sec-panel').style.width=(100-r)+'%';
+  if(activeSong)getSong(activeSong).ratio=r;
+});
+divEl.addEventListener('pointerup', () => {if(divDrag){divDrag=false;divEl.classList.remove('drag');save();setTimeout(drawAll,50)}});
+
+/* ══════════════════════════════════════════════
+   RESIZE OBSERVER
+══════════════════════════════════════════════ */
+let resizeTimer;
+new ResizeObserver(() => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (!activeSong) return;
+    sizePads('main'); sizePads('sec');
+    drawAll();
+  }, 80);
+}).observe(document.getElementById('grids'));
+
+/* ══════════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════════ */
+let toastT;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2500)}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeCtx()}});
+
+/* ══════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════ */
+load();
+renderSb();
+if (P.midi && P.midi.host) midiConnect(); else updateMidiIndicator('disconnected');
+</script>
+</body>
+</html>
